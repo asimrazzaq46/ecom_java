@@ -1,5 +1,6 @@
-package com.ecomerce.sb_ecom.payload;
+package com.ecomerce.sb_ecom.payload.category;
 
+import com.ecomerce.sb_ecom.payload.pagination.PageInformation;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,4 +12,5 @@ import java.util.List;
 @AllArgsConstructor
 public class CategoryResponse {
     private List<CategoryDto> content;
+    private PageInformation pageDetail;
 }

@@ -1,4 +1,4 @@
-package com.ecomerce.sb_ecom.payload;
+package com.ecomerce.sb_ecom.payload.category;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
