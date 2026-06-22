@@ -2,12 +2,16 @@ package com.ecomerce.sb_ecom.service;
 
 import com.ecomerce.sb_ecom.exceptions.ApiException;
 import com.ecomerce.sb_ecom.exceptions.ResourceNotFoundException;
+import com.ecomerce.sb_ecom.interfaces.ICartService;
 import com.ecomerce.sb_ecom.interfaces.IFileService;
 import com.ecomerce.sb_ecom.interfaces.IPaginationService;
 import com.ecomerce.sb_ecom.interfaces.IProductService;
+import com.ecomerce.sb_ecom.model.Cart;
 import com.ecomerce.sb_ecom.model.Product;
+import com.ecomerce.sb_ecom.payload.cart.CartDto;
 import com.ecomerce.sb_ecom.payload.product.ProductDto;
 import com.ecomerce.sb_ecom.payload.product.ProductResponse;
+import com.ecomerce.sb_ecom.repositories.ICartRepository;
 import com.ecomerce.sb_ecom.repositories.ICategoryRepository;
 import com.ecomerce.sb_ecom.repositories.IProductRepository;
 import org.modelmapper.ModelMapper;
@@ -40,6 +44,12 @@ public class ProductService implements IProductService {
 
     @Autowired
     private IFileService fileService;
+
+    @Autowired
+    private ICartRepository cartRepo;
+
+    @Autowired
+    private ICartService cartService;
 
     @Value("${project.image}")
     private String path;
@@ -79,9 +89,10 @@ public class ProductService implements IProductService {
                 discount = 0.0;
             }
 
-            if (discount <= 0 || discount > 100) {
-                throw new ApiException("Product discount must be between 0 and 100");
+            if (discount < 0 || discount >= 100) {
+                throw new ApiException("Product discount must be between 0 and less than 100");
             }
+            product.setDiscount(discount);
 
             Double specialPrice = price - ((discount * 0.01) * price);
             product.setSpecialPrice(specialPrice);
@@ -202,6 +213,17 @@ public class ProductService implements IProductService {
 
         Product updatedProduct = productRepo.save(productToUpdate);
 
+        List<Cart> cartList = cartRepo.findAllByProductId(updatedProduct.getId());
+        List<CartDto> cartDtoList = cartList.stream().map(cart -> {
+            CartDto cartDto = modelMapper.map(cart, CartDto.class);
+            List<ProductDto> productDtoList = cart.getCartItems().stream()
+                    .map(cartItem -> modelMapper.map(cartItem.getProduct(), ProductDto.class)).toList();
+            cartDto.setProducts(productDtoList);
+            return cartDto;
+        }).toList();
+
+        cartDtoList.forEach(cart -> cartService.UpdateProductInCarts(cart.getId(), productId));
+
         ProductDto productDtoResponse = modelMapper.map(updatedProduct, ProductDto.class);
         productDtoResponse.setProductId(productId);
         return productDtoResponse;
@@ -210,6 +232,9 @@ public class ProductService implements IProductService {
     @Override
     public ProductDto deleteProduct(Long productId) {
         Product product = productRepo.findById(productId).orElseThrow(() -> new ResourceNotFoundException("Product", "ProductId", productId));
+
+        List<Cart> cartList = cartRepo.findAllByProductId(productId);
+        cartList.forEach(cart -> cartService.deleteProductFromCart(cart.getCartId(), productId));
         productRepo.delete(product);
         return modelMapper.map(product, ProductDto.class);
     }

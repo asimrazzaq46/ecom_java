@@ -10,4 +10,11 @@ public interface ICartService {
 
     List<CartDto> getAllCarts();
 
+    CartDto getCartByEmailAndId(String emailId, Long cartId);
+
+    CartDto updateCartProductQuantity(Long productId, int delete);
+
+    String deleteProductFromCart(Long cartId, Long productId);
+
+    void UpdateProductInCarts(Long id, Long productId);
 }
