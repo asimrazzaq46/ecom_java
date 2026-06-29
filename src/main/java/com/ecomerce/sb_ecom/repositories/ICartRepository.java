@@ -3,9 +3,11 @@ package com.ecomerce.sb_ecom.repositories;
 import com.ecomerce.sb_ecom.model.Cart;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public interface ICartRepository extends JpaRepository<Cart, Long> {
 
     @Query("SELECT c FROM Cart c Where c.user.email = ?1")
